@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>微企通讯录</title>
+<link rel="dns-prefetch" href="">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+<script type="text/javascript">
+    window.setup = {"detail":["bit","UIN","姓名","pinyin","部门列表","手机","邮箱","职位","微信","帐号"],"spdetail":["bit","UIN","姓名","pinyin","部门列表"],"config":{"手机":"tel","邮箱":"email","searchonline":false}}
+    window.dep = {"dep":{"1":["腾讯公司",20,[592,6,1141]],"592":["腾讯公司819",0,[597,595,594,593]],"597":["腾讯公司283",0,[]],"595":["腾讯公司566",0,[596]],"596":["腾讯公司209",0,[]],"594":["腾讯公司159",0,[]],"593":["腾讯公司684",0,[]],"6":["admin",1,[]],"1141":["temp",0,[]]}}
+</script>
+<script>
+(function () {
+    window.fromcache = true;
+    window.storage = {
+        get: function (a, d) {
+            var c;
+            try {
+                c = localStorage.getItem(a);
+            } catch (b) {
+                return undefined;
+            }
+            if (c) {
+                return d ? JSON.parse(c) : c;
+            } else {
+                return undefined;
+            }
+        },
+        set: function (a, d, c) {
+            if (c) {
+                d = JSON.stringify(d);
+            }
+            try {
+                localStorage.setItem(a, d);
+            } catch (b) {
+                return undefined;
+            }
+            return true;
+        },
+        remove: function (a) {
+            try {
+                localStorage.removeItem(a);
+            } catch (b) {}
+        },
+        removeAll: function (a) {
+            for (var c = a.length - 1; c >= 0; c--) {
+                var b = a[c].name;
+                try {
+                    localStorage.removeItem(b);
+                } catch (d) {}
+            }
+        }
+    };
+    window.isSupportLocalStorage = storage.set("isSupportLocalStorage", 1);
+    window.hashcode = function (d) {
+        d = d || "";
+        var c = 0,
+            a, b;
+        if (d.length === 0) {
+            return c;
+        }
+        for (b = 0; b < d.length; b++) {
+            a = d.charCodeAt(b);
+            c = ((c << 5) - c) + a;
+            c = c & c;
+        }
+        return c;
+    };
+    window.loader = {
+        isCss: /.css_/,
+        debug: false,
+        res: [],
+        resAppendNum: 0,
+        base: "",
+        alias: {},
+        isLocal: function (c) {
+            var b = c.name,
+                a = c.v,
+                d = storage.get(b, true);
+            if (!d || d.v !== a || d.hash !== hashcode(d.code)) {
+                return false;
+            }
+            return true;
+        },
+        nameToUrl: function (a) {
+            a = this.alias[a] || a;
+            return this.base + a;
+        },
+        parseUrl: function (c) {
+            var a = /_\w*?\.js/,
+                d = {}, b;
+            b = c.match(a);
+            if (b) {
+                d.name = c.replace(b[0], "");
+                d.v = b[0].replace("_", "");
+            } else {
+                d.name = c;
+                d.v = -1;
+            }
+            return d;
+        },
+        config: function (e) {
+            var a = e.res.length,
+                h = this.isCss,
+                f, g, d, b;
+            this.base = e.base || "";
+            this.alias = e.alias;
+            this.debug = e.debug || !window.isSupportLocalStorage;
+            for (f = 0; f < a; f++) {
+                g = this.nameToUrl(e.res[f]);
+                d = {};
+                b = this.parseUrl(g);
+                d.url = g;
+                d.name = b.name;
+                d.v = b.v;
+                d.isLocal = this.isLocal(d);
+                if (!d.isLocal) {
+                    window.fromcache = false;
+                }
+                if (h.test(g)) {
+                    d.isCss = true;
+                }
+                this.res.push(d);
+            }
+            if (this.debug) {
+                this.resCode = {};
+                storage.removeAll(this.res);
+            }
+            this.append();
+        },
+        append: function (f) {
+            var d = this.res,
+                c, b, a = d.length;
+            for (c = this.resAppendNum; c < a; c++) {
+                b = d[c];
+                if (b.isLocal && !this.debug) {
+                    var g = storage.get(b.name, true);
+                    if (!b.isAppend && this.resAppendNum === c && g) {
+                        b.code = g.code;
+                        var e;
+                        if (b.isCss) {
+                            e = document.createElement("style");
+                            e.innerHTML = b.code;
+                            document.head.appendChild(e);
+                        } else {
+                            e = document.createElement("script");
+                            e.innerHTML = "(" + b.code + ")()";
+                            document.head.appendChild(e);
+                        }
+                        this.resAppendNum++;
+                    }
+                } else {
+                    if (!f) {
+                        this.getScript(b);
+                    }
+                }
+            }
+        },
+        loaderEvent: function (c) {
+            var e = this.res,
+                b = this.resAppendNum,
+                d, a = e.length;
+            for (d = b; d < a; d++) {
+                if (e[d].name === c) {
+                    e[d].isLocal = true;
+                    break;
+                }
+            }
+            if (e[b].name === c) {
+                this.append(true);
+            }
+        },
+        getScript: function (a) {
+            var b = document.createElement("script");
+            b.async = "async";
+            b.src = a.url;
+            document.getElementsByTagName("head")[0].appendChild(b);
+        }
+    };
+    window.define = function (a, g) {
+        a = loader.nameToUrl(a);
+        var b = loader.isCss,
+            e = loader.parseUrl(a),
+            h = {};
+        if (b.test(a)) {
+            h.isCss = true;
+            h.code = g;
+        } else {
+            h.code = g.toString();
+        }
+        h.hash = hashcode(h.code);
+        h.name = e.name;
+        h.v = e.v;
+        if (!loader.debug) {
+            storage.set(h.name, h, true);
+            loader.loaderEvent(h.name);
+        } else {
+            loader.resCode[h.name] = g;
+            var f = loader.resAppendNum;
+            if (loader.res[f].name === h.name) {
+                var d = loader.res.length,
+                    c;
+                for (c = f; c < d; c++) {
+                    var j = loader.res[c];
+                    if (loader.resAppendNum === c && loader.resCode[j.name]) {
+                        if (j.isCss) {
+                            var k = document.createElement("style");
+                            k.innerHTML = h.code;
+                            document.head.appendChild(k);
+                        } else {
+                            loader.resCode[j.name]();
+                        }
+                        loader.resAppendNum++;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+    };
+})();
+ 
+var alias = {
+    'css': 'contact.style.js',
+    'js': 'contact.min.js'
+}
+loader.config({
+    base: './',
+    alias: alias,
+    res: ['js', 'css']
+})
+</script>
+</body>
+</html>
